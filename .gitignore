@@ -1,0 +1,9 @@
+# System files
+.DS_Store
+
+# Local vault storage file (contains encrypted database - do NOT commit to Git)
+api/vault.data.php
+api/vault.data.php.bak
+api/rate_limit.data.php
+
+
