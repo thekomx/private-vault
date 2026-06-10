@@ -26,28 +26,13 @@ While cryptographic operations are handled client-side in the browser, storing t
 <details>
   <summary>📸 Click here to view all screenshots...</summary>
 
-  ### 📥 CSV Data Import & Migration
-  | 📥 CSV Data Import Panel | 📥 Drag & Drop File Dropzone |
+  | | |
   | :---: | :---: |
-  | ![CSV Data Import](images/Screenshot_Private_Vault_05.png) | ![CSV Dropzone](images/Screenshot_Private_Vault_09.png) |
-
-  ### 🔑 Setup, Security & Auto-Lock Settings
-  | 🔑 Master Password Strength Estimator | 💾 Offline Backup Exporter |
-  | :---: | :---: |
-  | ![Password Strength](images/Screenshot_Private_Vault_06.png) | ![Offline Backup](images/Screenshot_Private_Vault_10.png) |
-
-  | ⚙️ Inactivity Timer Settings | ⏱️ Background Tab Timeout |
-  | :---: | :---: |
-  | ![Inactivity Settings](images/Screenshot_Private_Vault_07.png) | ![Background Timeout](images/Screenshot_Private_Vault_08.png) |
-
-  ### 🩹 Self-Healing & Recovery Warnings
-  | 🩹 Login Warning Banner | 🩹 Unlocked Warning Banner |
-  | :---: | :---: |
-  | ![Login Warning Banner](images/Screenshot_Private_Vault_11.png) | ![Unlocked Warning Banner](images/Screenshot_Private_Vault_12.png) |
-
-  | 🩹 Decryption Corruption Alert | 🩹 Manual Restore Option |
-  | :---: | :---: |
-  | ![Decryption Corruption Alert](images/Screenshot_Private_Vault_13.png) | ![Manual Restore Option](images/Screenshot_Private_Vault_14.png) |
+  | ![Screenshot 05](images/Screenshot_Private_Vault_05.png) | ![Screenshot 06](images/Screenshot_Private_Vault_06.png) |
+  | ![Screenshot 07](images/Screenshot_Private_Vault_07.png) | ![Screenshot 08](images/Screenshot_Private_Vault_08.png) |
+  | ![Screenshot 09](images/Screenshot_Private_Vault_09.png) | ![Screenshot 10](images/Screenshot_Private_Vault_10.png) |
+  | ![Screenshot 11](images/Screenshot_Private_Vault_11.png) | ![Screenshot 12](images/Screenshot_Private_Vault_12.png) |
+  | ![Screenshot 13](images/Screenshot_Private_Vault_13.png) | ![Screenshot 14](images/Screenshot_Private_Vault_14.png) |
 </details>
 
 ---
