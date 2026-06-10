@@ -24,37 +24,30 @@ While cryptographic operations are handled client-side in the browser, storing t
 | ![Credentials Card](images/Screenshot_Private_Vault_03.png) | ![Lookup Settings](images/Screenshot_Private_Vault_04.png) |
 
 <details>
-  <summary>📸 Click here to view all step-by-step screenshots...</summary>
+  <summary>📸 Click here to view all screenshots...</summary>
 
-  ### 📥 CSV Data Import & dropzone
-  * **CSV Data Import Panel**:
-    ![CSV Data Import](images/Screenshot_Private_Vault_05.png)
-  * **Drag & Drop CSV File Dropzone**:
-    ![CSV Dropzone](images/Screenshot_Private_Vault_09.png)
+  ### 📥 CSV Data Import & Migration
+  | 📥 CSV Data Import Panel | 📥 Drag & Drop File Dropzone |
+  | :---: | :---: |
+  | ![CSV Data Import](images/Screenshot_Private_Vault_05.png) | ![CSV Dropzone](images/Screenshot_Private_Vault_09.png) |
 
-  ### 🔑 Setup & Master Password Change
-  * **Master Password Strength Estimator**:
-    ![Password Strength](images/Screenshot_Private_Vault_06.png)
+  ### 🔑 Setup, Security & Auto-Lock Settings
+  | 🔑 Master Password Strength Estimator | 💾 Offline Backup Exporter |
+  | :---: | :---: |
+  | ![Password Strength](images/Screenshot_Private_Vault_06.png) | ![Offline Backup](images/Screenshot_Private_Vault_10.png) |
 
-  ### ⚙️ Auto-Lock & Security Settings
-  * **Inactivity Timer Settings**:
-    ![Inactivity Settings](images/Screenshot_Private_Vault_07.png)
-  * **Background Tab Timeout**:
-    ![Background Timeout](images/Screenshot_Private_Vault_08.png)
+  | ⚙️ Inactivity Timer Settings | ⏱️ Background Tab Timeout |
+  | :---: | :---: |
+  | ![Inactivity Settings](images/Screenshot_Private_Vault_07.png) | ![Background Timeout](images/Screenshot_Private_Vault_08.png) |
 
-  ### 💾 Offline HTML Backup Exporter
-  * **Offline Backup Panel**:
-    ![Offline Backup](images/Screenshot_Private_Vault_10.png)
+  ### 🩹 Self-Healing & Recovery Warnings
+  | 🩹 Login Warning Banner | 🩹 Unlocked Warning Banner |
+  | :---: | :---: |
+  | ![Login Warning Banner](images/Screenshot_Private_Vault_11.png) | ![Unlocked Warning Banner](images/Screenshot_Private_Vault_12.png) |
 
-  ### 🩹 Self-Healing & Recovery Alerts
-  * **Login Warning Banners**:
-    ![Login Warning Banner](images/Screenshot_Private_Vault_11.png)
-  * **Unlocked Warning Banners**:
-    ![Unlocked Warning Banner](images/Screenshot_Private_Vault_12.png)
-  * **Decryption Corruption Alerts**:
-    ![Decryption Corruption Alert](images/Screenshot_Private_Vault_13.png)
-  * **Manual Restore Options**:
-    ![Manual Restore Option](images/Screenshot_Private_Vault_14.png)
+  | 🩹 Decryption Corruption Alert | 🩹 Manual Restore Option |
+  | :---: | :---: |
+  | ![Decryption Corruption Alert](images/Screenshot_Private_Vault_13.png) | ![Manual Restore Option](images/Screenshot_Private_Vault_14.png) |
 </details>
 
 ---
