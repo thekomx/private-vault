@@ -922,6 +922,107 @@
       background: rgba(255, 255, 255, 0.08) !important;
       color: var(--text-main) !important;
     }
+
+    /* ----------------------------------------------------
+       Pinned & Favorites CSS
+    ------------------------------------------------------- */
+    .quick-access-container {
+      display: flex;
+      gap: 0.6rem;
+      overflow-x: auto;
+      padding: 0.2rem 0 0.8rem 0;
+      margin-bottom: 0.8rem;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+    }
+    .quick-access-container::-webkit-scrollbar {
+      height: 4px;
+    }
+    .quick-access-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    .quick-access-header {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .quick-card {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .quick-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(245, 158, 11, 0.4);
+      transform: translateY(-1px);
+    }
+    .quick-card-star {
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.4));
+    }
+    .star-btn {
+      background: none;
+      border: none;
+      padding: 0.2rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      border-radius: 50%;
+    }
+    .star-btn:hover {
+      color: #fbbf24;
+      background: rgba(255, 255, 255, 0.05);
+      transform: scale(1.1);
+    }
+    .star-btn.pinned {
+      color: #fbbf24;
+      filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
+    }
+    .star-btn svg, .quick-card-star svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .star-btn.pinned svg {
+      fill: #fbbf24;
+    }
+    .pinned-badge {
+      display: inline-flex;
+      align-items: center;
+      color: #fbbf24;
+      margin-left: 0.4rem;
+      filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.5));
+      vertical-align: middle;
+    }
+    .pinned-badge svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+
   </style>
 </head>
 
@@ -1128,6 +1229,11 @@
               <input type="checkbox" id="displayPassword" checked style="accent-color: var(--primary); cursor: pointer;">
               Password
             </label>
+            <label
+              style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--text-main); cursor: pointer;">
+              <input type="checkbox" id="lookupFloatPinned" checked style="accent-color: var(--primary); cursor: pointer;">
+              Float Pinned to Top
+            </label>
           </div>
         </div>
         <!-- Timeout Warning message -->
@@ -1171,6 +1277,19 @@
         <div class="input-wrapper">
           <input type="text" id="lookupSearchInput" class="form-control" placeholder="Type URL (e.g. github.com)..."
             autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Quick-Access Pinned Favorites Section -->
+      <div id="quickAccessArea" style="display: none; margin-bottom: 0.5rem;">
+        <div class="quick-access-header">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="color: #fbbf24; filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+          </svg>
+          Quick Access Favorites
+        </div>
+        <div class="quick-access-container" id="quickAccessContainer">
+          <!-- Populated dynamically via JS -->
         </div>
       </div>
 
@@ -1343,6 +1462,17 @@
               style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--text-main); cursor: pointer;">
               <input type="checkbox" id="manageSearchByNotes" style="accent-color: var(--primary); cursor: pointer;">
               Notes
+            </label>
+          </div>
+        </div>
+        <!-- Options row -->
+        <div style="margin-top: 0.75rem; margin-bottom: 0.25rem;">
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.4rem;">Options</label>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <label
+              style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--text-main); cursor: pointer;">
+              <input type="checkbox" id="manageFloatPinned" checked style="accent-color: var(--primary); cursor: pointer;">
+              Float Pinned to Top
             </label>
           </div>
         </div>
@@ -1887,6 +2017,13 @@
           <textarea id="credNotes" class="form-control" placeholder="Recovery codes, PINs, or secondary details..."
             rows="3" style="resize: vertical; min-height: 80px;"></textarea>
         </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; margin-bottom: 0.5rem;">
+          <input type="checkbox" id="credPinned" style="accent-color: var(--primary); cursor: pointer; width: 16px; height: 16px;">
+          <label for="credPinned" style="font-size: 0.9rem; color: var(--text-main); cursor: pointer; margin-bottom: 0; user-select: none;">
+            Pin to Quick-Access Favorites
+          </label>
+        </div>
       </div>
 
       <p id="editWarning" class="warning-text"
@@ -2193,8 +2330,18 @@
       const sortField = document.getElementById('lookupSortField').value;
       const sortOrder = document.getElementById('lookupSortOrder').value;
 
+      const floatPinned = document.getElementById('lookupFloatPinned').checked;
+
       // Perform sort
       items = [...items].sort((a, b) => {
+        if (floatPinned) {
+          const pinA = !!a.pinned;
+          const pinB = !!b.pinned;
+          if (pinA !== pinB) {
+            return pinA ? -1 : 1;
+          }
+        }
+
         let valA = a[sortField] || '';
         let valB = b[sortField] || '';
 
@@ -2258,12 +2405,18 @@
           userSuffixHtml = `<span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.4rem;">(${match.username})</span>`;
         }
 
+        let pinBadgeHtml = '';
+        if (match.pinned) {
+          pinBadgeHtml = `<span class="pinned-badge" title="Pinned Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></span>`;
+        }
+
         const displayName = match.name && match.name.trim() !== '' ? match.name : getCleanDomain(match.site_url);
 
         btn.innerHTML = `
           <div style="display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; align-items: flex-start; gap: 0.1rem;">
             <div style="display: flex; align-items: center; gap: 0.35rem; width: 100%;">
               <span class="vault-item-url" style="font-weight: 500; color: var(--text-main);">${displayName}</span>
+              ${pinBadgeHtml}
               ${badgeHtml}
               ${userSuffixHtml}
             </div>
@@ -2293,6 +2446,7 @@
     // Refresh display of matches
     function refreshLookupResults() {
       storeResultCardInPlaceholder();
+      updateQuickAccessRow();
       const query = lookupSearchInput.value.trim().toLowerCase();
       const badgeEl = document.getElementById('lookupCountBadge');
 
@@ -2405,9 +2559,7 @@
         listAllActive = false;
         listAllBtn.classList.remove('btn-primary');
         listAllBtn.classList.add('btn-secondary');
-        lookupMatchesList.innerHTML = '';
-        lookupWatermark.style.display = 'block';
-        lookupWatermark.textContent = getSearchLabelText();
+        refreshLookupResults();
       });
     }
 
@@ -2803,6 +2955,15 @@
           }
         }
       }
+
+      // 4. Float Pinned settings
+      const savedLookupFloatPinned = localStorage.getItem('lookup_float_pinned') !== 'false';
+      const lookupFloatPinned = document.getElementById('lookupFloatPinned');
+      if (lookupFloatPinned) lookupFloatPinned.checked = savedLookupFloatPinned;
+
+      const savedManageFloatPinned = localStorage.getItem('manage_float_pinned') !== 'false';
+      const manageFloatPinned = document.getElementById('manageFloatPinned');
+      if (manageFloatPinned) manageFloatPinned.checked = savedManageFloatPinned;
     }
 
     // Attach display checkbox event listeners
@@ -2821,6 +2982,24 @@
         applyLookupDisplaySettings();
       });
     }
+
+    const lookupFloatPinnedChk = document.getElementById('lookupFloatPinned');
+    if (lookupFloatPinnedChk) {
+      lookupFloatPinnedChk.addEventListener('change', (e) => {
+        localStorage.setItem('lookup_float_pinned', e.target.checked);
+        refreshLookupResults();
+      });
+    }
+
+    const manageFloatPinnedChk = document.getElementById('manageFloatPinned');
+    if (manageFloatPinnedChk) {
+      manageFloatPinnedChk.addEventListener('change', (e) => {
+        localStorage.setItem('manage_float_pinned', e.target.checked);
+        refreshManageList();
+      });
+    }
+
+
 
     // Attach password eye toggle listener
     const lookupTogglePassBtn = document.getElementById('lookupTogglePassBtn');
@@ -3318,6 +3497,10 @@
       clearDecryptedCard();
       showUnlockedRecoveryAlert(false);
       localStorage.removeItem('pma_recovered_alert');
+      const quickAccessArea = document.getElementById('quickAccessArea');
+      if (quickAccessArea) quickAccessArea.style.display = 'none';
+      const quickAccessContainer = document.getElementById('quickAccessContainer');
+      if (quickAccessContainer) quickAccessContainer.innerHTML = '';
       const lookupBadge = document.getElementById('lookupCountBadge');
       const manageBadge = document.getElementById('manageCountBadge');
       if (lookupBadge) lookupBadge.style.display = 'none';
@@ -3532,8 +3715,17 @@
       // Sort
       const sortField = document.getElementById('manageSortField').value;
       const sortOrder = document.getElementById('manageSortOrder').value;
+      const floatPinned = document.getElementById('manageFloatPinned').checked;
 
       items = [...items].sort((a, b) => {
+        if (floatPinned) {
+          const pinA = !!a.pinned;
+          const pinB = !!b.pinned;
+          if (pinA !== pinB) {
+            return pinA ? -1 : 1;
+          }
+        }
+
         let valA = a[sortField] || '';
         let valB = b[sortField] || '';
 
@@ -3608,6 +3800,7 @@
         const item = document.createElement('div');
         item.className = 'vault-item';
 
+
         const nameSpan = document.createElement('div');
         nameSpan.className = 'vault-item-url';
         nameSpan.style.display = 'flex';
@@ -3631,6 +3824,8 @@
         titleText.style.color = 'var(--text-main)';
         titleText.textContent = displayName;
         titleWrapper.appendChild(titleText);
+
+
 
         const dupInfo = getDuplicateInfo(itemObj);
         if (dupInfo) {
@@ -3670,6 +3865,15 @@
 
         const actualIndex = VAULT_ITEMS.indexOf(itemObj);
 
+        const starBtn = document.createElement('button');
+        starBtn.className = 'btn-icon star-btn';
+        if (itemObj.pinned) {
+          starBtn.classList.add('pinned');
+        }
+        starBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
+        starBtn.title = itemObj.pinned ? "Unpin from favorites" : "Pin to favorites";
+        starBtn.addEventListener('click', () => toggleItemPin(actualIndex));
+
         const editBtn = document.createElement('button');
         editBtn.className = 'btn-icon btn-icon-edit';
         editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
@@ -3682,6 +3886,7 @@
         deleteBtn.title = "Delete credentials";
         deleteBtn.addEventListener('click', () => openDeleteModal(actualIndex));
 
+        actions.appendChild(starBtn);
         actions.appendChild(editBtn);
         actions.appendChild(deleteBtn);
 
@@ -3689,6 +3894,102 @@
         item.appendChild(actions);
 
         listDiv.appendChild(item);
+      });
+    }
+
+    // Pinned Favorites Helper Functions
+    async function toggleItemPin(index) {
+      if (index < 0 || index >= VAULT_ITEMS.length) return;
+
+      // Make a proposed clone
+      const proposedItems = JSON.parse(JSON.stringify(VAULT_ITEMS));
+      proposedItems[index].pinned = !proposedItems[index].pinned;
+
+      // Encrypt and post to save_vault
+      try {
+        const plaintext = JSON.stringify(proposedItems);
+        const derivationSalt = VAULT_SALT;
+        const masterKey = await deriveKeyPBKDF2(UNLOCKED_PASS, derivationSalt, 600000, 256);
+        const encryptedPayload = await encryptGCM(plaintext, masterKey);
+        const verificationHash = await getVerificationHash(UNLOCKED_PASS);
+
+        const response = await fetch(`${API_ROOT}/save_vault.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            verification_hash: verificationHash,
+            encrypted_vault: encryptedPayload,
+            vault_empty: proposedItems.length === 0
+          })
+        });
+
+        const result = await response.json();
+        if (result.status === 'success') {
+          // Success: commit to local memory
+          VAULT_ITEMS = proposedItems;
+          showToast(VAULT_ITEMS[index].pinned ? "Site pinned to Favorites!" : "Site unpinned from Favorites.", "success");
+          refreshManageList();
+          refreshLookupResults();
+          updateQuickAccessRow();
+        } else {
+          showToast(result.error || "Failed to update pinning status.", "error");
+        }
+      } catch (err) {
+        showToast("Server request failed. Could not pin item.", "error");
+        console.error(err);
+      }
+    }
+
+    function updateQuickAccessRow() {
+      const query = document.getElementById('lookupSearchInput').value.trim().toLowerCase();
+      const area = document.getElementById('quickAccessArea');
+      const container = document.getElementById('quickAccessContainer');
+
+      if (!area || !container) return;
+
+      // Only show when search query is empty and list all is NOT active
+      if (query !== '' || listAllActive || VAULT_ITEMS.length === 0) {
+        area.style.display = 'none';
+        return;
+      }
+
+      const pinnedItems = VAULT_ITEMS.filter(item => !!item.pinned);
+
+      if (pinnedItems.length === 0) {
+        area.style.display = 'none';
+        return;
+      }
+
+      area.style.display = 'block';
+      container.innerHTML = '';
+
+      pinnedItems.forEach(itemObj => {
+        const card = document.createElement('div');
+        card.className = 'quick-card';
+
+        const displayName = itemObj.name && itemObj.name.trim() !== '' ? itemObj.name : getCleanDomain(itemObj.site_url);
+
+        card.innerHTML = `
+          <span class="quick-card-star"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></span>
+          <span>${displayName}</span>
+        `;
+
+        card.addEventListener('click', () => {
+          document.getElementById('lookupSearchInput').value = itemObj.site_url;
+          // Trigger search input event programmatically to fire list
+          const event = new Event('input', { bubbles: true });
+          document.getElementById('lookupSearchInput').dispatchEvent(event);
+
+          // Force expand the match card
+          setTimeout(() => {
+            const header = document.querySelector('#lookupMatchesList .vault-item-header');
+            if (header) {
+              header.click();
+            }
+          }, 80);
+        });
+
+        container.appendChild(card);
       });
     }
 
@@ -3748,13 +4049,15 @@
 
       const nameVal = document.getElementById('credName').value.trim();
       const notesVal = document.getElementById('credNotes').value.trim();
+      const pinnedVal = document.getElementById('credPinned').checked;
 
       const nameChanged = (nameVal !== (match.name || ''));
       const usernameChanged = (usernameVal !== match.username);
       const passwordChanged = (passwordVal !== '' && passwordVal !== match.password);
       const notesChanged = (notesVal !== (match.notes || ''));
+      const pinnedChanged = (pinnedVal !== !!match.pinned);
 
-      const hasChanges = nameChanged || usernameChanged || passwordChanged || notesChanged;
+      const hasChanges = nameChanged || usernameChanged || passwordChanged || notesChanged || pinnedChanged;
       // Save button is disabled if there are no changes, OR if any required field (url or username) is cleared
       const valid = (urlVal !== '' && usernameVal !== '');
       saveBtn.disabled = !hasChanges || !valid;
@@ -3788,6 +4091,7 @@
       syncPasswordToggleIcon(credPassword);
       lastPasswordLength = 0;
       document.getElementById('credNotes').value = '';
+      document.getElementById('credPinned').checked = false;
       setModalCopyButtonVisible(false);
       setCurrentCopyButtonVisible(false);
 
@@ -3817,6 +4121,7 @@
       lastPasswordLength = 0;
 
       document.getElementById('credNotes').value = match.notes || '';
+      document.getElementById('credPinned').checked = !!match.pinned;
 
       // Show current password group in Edit mode
       document.getElementById('credCurrentPasswordGroup').style.display = 'block';
@@ -3879,6 +4184,7 @@
     document.getElementById('credUsername').addEventListener('change', updateEditModalState);
     document.getElementById('credNotes').addEventListener('input', updateEditModalState);
     document.getElementById('credNotes').addEventListener('change', updateEditModalState);
+    document.getElementById('credPinned').addEventListener('change', updateEditModalState);
 
     // Toggle current password visibility
     const toggleCurrentPasswordVisibilityBtn = document.querySelector('.toggle-current-password-visibility');
@@ -3940,11 +4246,12 @@
       const username = document.getElementById('credUsername').value.trim();
       const password = document.getElementById('credPassword').value;
       const notes = document.getElementById('credNotes').value.trim();
+      const pinned = document.getElementById('credPinned').checked;
 
       if (!siteUrl || !username || (index === -1 && !password)) return;
 
       const finalPassword = (index !== -1 && !password) ? credCurrentPassword.value : password;
-      const record = { name, site_url: siteUrl, username, password: finalPassword, notes };
+      const record = { name, site_url: siteUrl, username, password: finalPassword, notes, pinned };
 
       // Hide any previous errors before saving
       const alertEl = document.getElementById('modalErrorAlert');
