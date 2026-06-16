@@ -11,6 +11,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Private Vault - Password Manager</title>
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='3' y='11' width='18' height='11' rx='3' fill='url(%23g)'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4' stroke='url(%23g)' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='16' r='2' fill='%230f172a'/%3E%3C/svg%3E">
+
   <!-- Modern Legible Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1971,6 +1974,7 @@
           <div class="input-wrapper">
             <input type="password" id="credCurrentPassword" class="form-control has-icon-right"
               placeholder="••••••••••••" disabled>
+            <span id="modalCurrentPasswordCopyFeedback" class="inline-feedback" style="display: none; position: absolute; right: 4.5rem;">Copied</span>
             <button type="button" class="input-icon-btn toggle-current-password-visibility" tabindex="-1">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -1991,6 +1995,7 @@
           <label for="credPassword">New Password</label>
           <div class="input-wrapper">
             <input type="password" id="credPassword" class="form-control has-icon-right" placeholder="••••••••••••">
+            <span id="modalPasswordCopyFeedback" class="inline-feedback" style="display: none; position: absolute; right: 4.5rem;">Copied</span>
             <button type="button" class="input-icon-btn toggle-password-visibility" tabindex="-1">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -4052,12 +4057,13 @@
       const pinnedVal = document.getElementById('credPinned').checked;
 
       const nameChanged = (nameVal !== (match.name || ''));
+      const urlChanged = (urlVal.toLowerCase() !== match.site_url.toLowerCase());
       const usernameChanged = (usernameVal !== match.username);
       const passwordChanged = (passwordVal !== '' && passwordVal !== match.password);
       const notesChanged = (notesVal !== (match.notes || ''));
       const pinnedChanged = (pinnedVal !== !!match.pinned);
 
-      const hasChanges = nameChanged || usernameChanged || passwordChanged || notesChanged || pinnedChanged;
+      const hasChanges = nameChanged || urlChanged || usernameChanged || passwordChanged || notesChanged || pinnedChanged;
       // Save button is disabled if there are no changes, OR if any required field (url or username) is cleared
       const valid = (urlVal !== '' && usernameVal !== '');
       saveBtn.disabled = !hasChanges || !valid;
@@ -4094,6 +4100,10 @@
       document.getElementById('credPinned').checked = false;
       setModalCopyButtonVisible(false);
       setCurrentCopyButtonVisible(false);
+      const currentFeedback = document.getElementById('modalCurrentPasswordCopyFeedback');
+      if (currentFeedback) currentFeedback.style.display = 'none';
+      const passwordFeedback = document.getElementById('modalPasswordCopyFeedback');
+      if (passwordFeedback) passwordFeedback.style.display = 'none';
 
       // Hide current password group in Add mode
       document.getElementById('credCurrentPasswordGroup').style.display = 'none';
@@ -4112,7 +4122,7 @@
 
       document.getElementById('credName').value = match.name || '';
       document.getElementById('credUrl').value = match.site_url;
-      document.getElementById('credUrl').disabled = true; // URL locked on edits
+      document.getElementById('credUrl').disabled = false;
       document.getElementById('credUsername').value = match.username;
 
       credPassword.value = '';
@@ -4140,6 +4150,10 @@
       setModalCopyButtonVisible(false);
       // Ensure current password copy button hidden for add mode
       // setCurrentCopyButtonVisible(false);
+      const currentFeedback = document.getElementById('modalCurrentPasswordCopyFeedback');
+      if (currentFeedback) currentFeedback.style.display = 'none';
+      const passwordFeedback = document.getElementById('modalPasswordCopyFeedback');
+      if (passwordFeedback) passwordFeedback.style.display = 'none';
       updateEditModalState();
       credentialModal.showModal();
     }
@@ -4204,6 +4218,13 @@
     modalCopyCurrentPasswordBtn.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(credCurrentPassword.value);
+        const feedback = document.getElementById('modalCurrentPasswordCopyFeedback');
+        if (feedback) {
+          feedback.style.display = 'inline';
+          setTimeout(() => {
+            feedback.style.display = 'none';
+          }, 2000);
+        }
         showToast('Current password copied', 'success');
       } catch (err) {
         showToast('Failed to copy current password', 'error');
@@ -4215,6 +4236,13 @@
       const val = credPassword.value;
       if (val) {
         navigator.clipboard.writeText(val).then(() => {
+          const feedback = document.getElementById('modalPasswordCopyFeedback');
+          if (feedback) {
+            feedback.style.display = 'inline';
+            setTimeout(() => {
+              feedback.style.display = 'none';
+            }, 2000);
+          }
           showToast("Password copied to clipboard.");
         }).catch(err => {
           showToast("Failed to copy password.", "error");
@@ -4277,6 +4305,13 @@
         proposedItems.push(record);
       } else {
         // Edit Mode
+        const exists = proposedItems.some((item, idx) => idx !== index && item.site_url.toLowerCase() === siteUrl);
+        if (exists) {
+          showModalError("A record for this Site URL already exists.");
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+          return;
+        }
         proposedItems[index] = record;
       }
 
