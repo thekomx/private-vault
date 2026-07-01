@@ -2071,6 +2071,42 @@
     </div>
   </dialog>
 
+  <!-- Export Confirmation Modal -->
+  <dialog id="exportConfirmModal" closedby="any" aria-labelledby="exportModalTitle">
+    <h3 id="exportModalTitle">Confirm Export</h3>
+    <form id="exportConfirmForm">
+      <div class="dialog-body">
+        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem; color: #f59e0b; display: flex; gap: 0.5rem; align-items: flex-start;">
+          <span style="font-size: 1.1rem; line-height: 1;">⚠️</span>
+          <div>
+            <strong>Warning: Unencrypted File</strong><br>
+            Exporting will download all credentials in plaintext. Ensure this file is kept secure.
+          </div>
+        </div>
+
+        <div id="exportErrorAlert" class="alert-danger-glass" style="display: none; position: relative; padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.1); backdrop-filter: blur(8px); margin-top: 1rem; margin-bottom: 1rem; font-size: 0.9rem; color: #fca5a5; align-items: start; gap: 0.75rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex-grow: 1; padding-right: 1.5rem; text-align: left;">
+            <strong style="display: block; margin-bottom: 0.15rem;">Export Failed</strong>
+            <span id="exportErrorMsg">Incorrect password.</span>
+          </div>
+          <button type="button" onclick="document.getElementById('exportErrorAlert').style.display = 'none'" style="background: none; border: none; color: #fca5a5; cursor: pointer; padding: 0.25rem; line-height: 1; font-weight: bold; position: absolute; top: 0.5rem; right: 0.5rem;" title="Dismiss Alert">✕</button>
+        </div>
+
+        <label for="exportConfirmPassword" style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--text-muted);">Master Password</label>
+        <input type="password" id="exportConfirmPassword" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+      </div>
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('exportConfirmModal').close()">Cancel</button>
+        <button type="submit" class="btn" id="exportConfirmSubmitBtn" style="background-color: var(--primary); color: white;">Confirm & Export</button>
+      </div>
+    </form>
+  </dialog>
+
 
 
   <!-- Container for Toasts -->
@@ -3565,6 +3601,10 @@
       document.getElementById('tabNav').style.display = 'none';
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.getElementById('lock-panel').style.display = 'block';
+      const unlockPasswordInput = document.getElementById('vaultUnlockPassword');
+      if (unlockPasswordInput) {
+        unlockPasswordInput.focus();
+      }
 
       if (autoLocked) {
         showToast("Vault locked due to inactivity.", "info");
@@ -5023,9 +5063,122 @@
       });
     }
 
+    let exportFailedAttempts = 0;
+
     const exportCsvBtn = document.getElementById('exportCsvBtn');
     if (exportCsvBtn) {
-      exportCsvBtn.addEventListener('click', exportToCSV);
+      exportCsvBtn.addEventListener('click', () => {
+        if (!VAULT_ITEMS || VAULT_ITEMS.length === 0) {
+          showToast("No credentials to export.", "error");
+          return;
+        }
+        exportFailedAttempts = 0;
+        const confirmPassInput = document.getElementById('exportConfirmPassword');
+        if (confirmPassInput) {
+          confirmPassInput.value = '';
+          confirmPassInput.disabled = false;
+        }
+        const confirmSubmitBtn = document.getElementById('exportConfirmSubmitBtn');
+        if (confirmSubmitBtn) {
+          confirmSubmitBtn.disabled = false;
+          confirmSubmitBtn.textContent = 'Confirm & Export';
+        }
+        const errorAlert = document.getElementById('exportErrorAlert');
+        if (errorAlert) {
+          errorAlert.style.display = 'none';
+        }
+        document.getElementById('exportConfirmModal').showModal();
+      });
+    }
+
+    const exportConfirmForm = document.getElementById('exportConfirmForm');
+    if (exportConfirmForm) {
+      exportConfirmForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const passwordInput = document.getElementById('exportConfirmPassword');
+        const password = passwordInput.value;
+        if (!password) return;
+
+        const submitBtn = document.getElementById('exportConfirmSubmitBtn');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verifying...';
+        passwordInput.disabled = true;
+
+        const errorAlert = document.getElementById('exportErrorAlert');
+        if (errorAlert) {
+          errorAlert.style.display = 'none';
+        }
+
+        try {
+          let verificationSuccess = false;
+
+          if (IS_OFFLINE_BACKUP) {
+            // Option B: Re-run PBKDF2 Key Derivation and Decrypt
+            const masterKey = await deriveKeyPBKDF2(password, VAULT_SALT, 600000, 256);
+            try {
+              await decryptGCM(EMBEDDED_VAULT_BLOB, masterKey);
+              verificationSuccess = true;
+            } catch (decErr) {
+              verificationSuccess = false;
+            }
+          } else {
+            // Online mode: Verify using api/get_vault.php & derive and decrypt
+            const verificationHash = await getVerificationHash(password);
+            const response = await fetch(`${API_ROOT}/get_vault.php`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ verification_hash: verificationHash })
+            });
+            if (response.ok) {
+              const result = await response.json();
+              const masterKey = await deriveKeyPBKDF2(password, VAULT_SALT, 600000, 256);
+              try {
+                await decryptGCM(result.encrypted_vault, masterKey);
+                verificationSuccess = true;
+              } catch (decErr) {
+                verificationSuccess = false;
+              }
+            } else {
+              verificationSuccess = false;
+            }
+          }
+
+          if (verificationSuccess) {
+            exportFailedAttempts = 0;
+            document.getElementById('exportConfirmModal').close();
+            exportToCSV();
+          } else {
+            exportFailedAttempts++;
+            if (exportFailedAttempts >= 3) {
+              document.getElementById('exportConfirmModal').close();
+              lockVault(false);
+              showToast("Vault locked due to too many failed confirmation attempts.", "error");
+            } else {
+              const remaining = 3 - exportFailedAttempts;
+              const errorMsg = document.getElementById('exportErrorMsg');
+              if (errorAlert && errorMsg) {
+                errorMsg.textContent = `Incorrect password. ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`;
+                errorAlert.style.display = 'flex';
+              }
+              passwordInput.disabled = false;
+              passwordInput.value = '';
+              passwordInput.focus();
+              submitBtn.disabled = false;
+              submitBtn.textContent = originalText;
+            }
+          }
+        } catch (err) {
+          const errorMsg = document.getElementById('exportErrorMsg');
+          if (errorAlert && errorMsg) {
+            errorMsg.textContent = "Verification error: " + err.message;
+            errorAlert.style.display = 'flex';
+          }
+          passwordInput.disabled = false;
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      });
     }
 
     // Inner sub-tabs switching inside Data Management
@@ -5377,6 +5530,10 @@
         if (IS_OFFLINE_BACKUP) {
           VAULT_SALT = EMBEDDED_VAULT_SALT;
           document.getElementById('lock-panel').style.display = 'block';
+          const unlockPasswordInput = document.getElementById('vaultUnlockPassword');
+          if (unlockPasswordInput) {
+            unlockPasswordInput.focus();
+          }
 
           const isEmpty = !EMBEDDED_VAULT_BLOB;
           updateLookupTabVisibility(isEmpty);
@@ -5399,10 +5556,18 @@
         if (info.status === 'setup') {
           // Setup Mode: Only show Setup Panel
           document.getElementById('setup-panel').style.display = 'block';
+          const setupPasswordInput = document.getElementById('setupPassword');
+          if (setupPasswordInput) {
+            setupPasswordInput.focus();
+          }
         } else {
           // Normal Mode: Show Lock Screen to unlock
           VAULT_SALT = info.vault_salt;
           document.getElementById('lock-panel').style.display = 'block';
+          const unlockPasswordInput = document.getElementById('vaultUnlockPassword');
+          if (unlockPasswordInput) {
+            unlockPasswordInput.focus();
+          }
 
           // Handle recovery check status
           if (info.recovered_from_backup === true) {
