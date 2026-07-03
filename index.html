@@ -1378,6 +1378,36 @@
             </div>
           </div>
 
+          <!-- TOTP row -->
+          <div class="result-row" id="lookupTotpRow" style="display: none; justify-content: space-between; align-items: center;">
+            <div class="result-value-container" style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="result-label">2FA Verification Code</span>
+                <span id="inlineTotpFeedback" class="inline-feedback" style="display: none;">Code copied</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.1rem;">
+                <span id="lookupTotpCode" style="font-size: 1.25rem; font-weight: 700; font-family: monospace; letter-spacing: 0.05em; color: var(--accent);">------</span>
+                <!-- SVG Circular Countdown Timer with Inner Text -->
+                <div style="position: relative; width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); flex-shrink: 0;">
+                  <svg width="28" height="28" viewBox="0 0 36 36" style="transform: rotate(-90deg); flex-shrink: 0;">
+                    <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255, 255, 255, 0.05)" stroke-width="3"></circle>
+                    <circle id="lookupTotpTimerCircle" cx="18" cy="18" r="16" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="100.5" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.2s linear;"></circle>
+                  </svg>
+                  <span id="lookupTotpTimerText" style="position: absolute; font-size: 0.7rem; font-weight: 600; color: var(--accent); font-family: monospace;">30</span>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button type="button" class="btn-copy" id="lookupCopyTotpBtn" title="Copy 2FA Verification Code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
           <!-- Notes row -->
           <div class="result-row" id="lookupNotesRow"
             style="display: none; flex-direction: column; align-items: stretch; gap: 0.5rem;">
@@ -1992,7 +2022,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="credPassword">New Password</label>
+          <label for="credPassword" id="credPasswordLabel">Password</label>
           <div class="input-wrapper">
             <input type="password" id="credPassword" class="form-control has-icon-right" placeholder="••••••••••••">
             <span id="modalPasswordCopyFeedback" class="inline-feedback" style="display: none; position: absolute; right: 4.5rem;">Copied</span>
@@ -2014,6 +2044,44 @@
 
           <div class="password-generator-row">
             <button type="button" class="btn btn-secondary" id="generatePasswordBtn">Generate Strong Password</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="credTotp">Two-Factor Authentication (2FA)</label>
+          <div class="input-wrapper">
+            <input type="password" id="credTotp" class="form-control has-icon-right" placeholder="e.g. JBSW Y3DP EHPK 3PXP" autocomplete="off">
+            <button type="button" class="input-icon-btn toggle-totp-visibility" title="Reveal TOTP Secret" tabindex="-1">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <button type="button" id="toggleAdvancedTotpBtn" style="background: none; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; padding: 0;">
+              <svg id="advancedTotpChevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s; transform: rotate(0deg);">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+              Advanced TOTP Settings
+            </button>
+            <div id="advancedTotpContainer" style="display: none; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
+              <div>
+                <label for="credTotpAlgorithm" style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Algorithm</label>
+                <select id="credTotpAlgorithm" class="form-control" style="font-size: 0.85rem; padding: 0.4rem;">
+                  <option value="SHA-1" selected>SHA-1 (Default)</option>
+                  <option value="SHA-256">SHA-256</option>
+                  <option value="SHA-512">SHA-512</option>
+                </select>
+              </div>
+              <div>
+                <label for="credTotpPeriod" style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Period</label>
+                <select id="credTotpPeriod" class="form-control" style="font-size: 0.85rem; padding: 0.4rem;">
+                  <option value="30" selected>30s (Default)</option>
+                  <option value="60">60s</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2188,6 +2256,32 @@
           input.type = 'password';
         }
         syncPasswordToggleIcon(input);
+      });
+    });
+
+    // Sync TOTP secret field toggle icon visually with type state
+    function syncTotpToggleIcon(input) {
+      const btn = input.nextElementSibling;
+      if (!btn || !btn.classList.contains('toggle-totp-visibility')) return;
+      if (input.type === 'password') {
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+        btn.title = 'Show TOTP Secret';
+      } else {
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+        btn.title = 'Hide TOTP Secret';
+      }
+    }
+
+    // Toggle TOTP secret visibility
+    document.querySelectorAll('.toggle-totp-visibility').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = btn.previousElementSibling;
+        if (input.type === 'password') {
+          input.type = 'text';
+        } else {
+          input.type = 'password';
+        }
+        syncTotpToggleIcon(input);
       });
     });
 
@@ -2689,6 +2783,15 @@
         notesRow.style.display = 'none';
       }
 
+      // Reset TOTP display state
+      const totpRow = document.getElementById('lookupTotpRow');
+      if (item.totp_secret && item.totp_secret.trim() !== '') {
+        totpRow.style.display = 'flex';
+        updateTotpDisplay();
+      } else {
+        totpRow.style.display = 'none';
+      }
+
       // Reset password eye toggle state
       isPasswordRevealed = false;
       const togglePassBtn = document.getElementById('lookupTogglePassBtn');
@@ -2734,6 +2837,18 @@
     document.getElementById('lookupCopyNotesBtn').addEventListener('click', () => {
       if (activeLookupItem && activeLookupItem.notes) {
         copyValueToClipboard(activeLookupItem.notes, 'inlineNotesFeedback');
+      }
+    });
+
+    document.getElementById('lookupCopyTotpBtn').addEventListener('click', async () => {
+      if (activeLookupItem && activeLookupItem.totp_secret) {
+        const key = await getOrCreateTotpKey(activeLookupItem);
+        if (key) {
+          const code = await generateTOTP(key, { period: activeLookupItem.totp_period || 30, digits: 6 });
+          if (code) {
+            copyValueToClipboard(code, 'inlineTotpFeedback');
+          }
+        }
       }
     });
 
@@ -2874,6 +2989,11 @@
       document.getElementById('inlineUsernameFeedback').style.display = 'none';
       document.getElementById('inlinePasswordFeedback').style.display = 'none';
       document.getElementById('inlineNotesFeedback').style.display = 'none';
+      document.getElementById('inlineTotpFeedback').style.display = 'none';
+
+      // Reset TOTP code row
+      document.getElementById('lookupTotpRow').style.display = 'none';
+      document.getElementById('lookupTotpCode').textContent = '------';
 
       // Clear notes text display area
       const notesDisplay = document.getElementById('lookupNotesDisplay');
@@ -3083,6 +3203,95 @@
     function generateRandomHex(bytesCount) {
       const bytes = window.crypto.getRandomValues(new Uint8Array(bytesCount));
       return arrayBufferToHex(bytes);
+    }
+
+    /**
+     * Converts a Base32 encoded string into a Uint8Array.
+     */
+    function base32ToBytes(str) {
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+      str = str.replace(/=+$/, '').toUpperCase().replace(/\s+/g, '');
+      let bits = 0;
+      let value = 0;
+      let index = 0;
+      const bytes = new Uint8Array(Math.floor((str.length * 5) / 8));
+      for (let i = 0; i < str.length; i++) {
+        const val = alphabet.indexOf(str.charAt(i));
+        if (val === -1) throw new Error("Invalid base32 character");
+        value = (value << 5) | val;
+        bits += 5;
+        if (bits >= 8) {
+          bytes[index++] = (value >>> (bits - 8)) & 255;
+          bits -= 8;
+        }
+      }
+      return bytes;
+    }
+
+    /**
+     * Imports and caches a SubtleCrypto CryptoKey on the item object in memory.
+     */
+    async function getOrCreateTotpKey(item) {
+      if (!item) return null;
+      if (item._totpKey) return item._totpKey;
+      if (!item.totp_secret) return null;
+      try {
+        const keyBytes = base32ToBytes(item.totp_secret);
+        const alg = item.totp_algorithm || 'SHA-1';
+        item._totpKey = await window.crypto.subtle.importKey(
+          "raw",
+          keyBytes,
+          { name: "HMAC", hash: alg },
+          false,
+          ["sign"]
+        );
+        return item._totpKey;
+      } catch (e) {
+        console.error("Failed to import TOTP key:", e);
+        return null;
+      }
+    }
+
+    /**
+     * Generates a TOTP code from a CryptoKey using dynamic truncation and BigInt timestamp math.
+     * Returns null if generation fails.
+     */
+    async function generateTOTP(cryptoKey, options = {}) {
+      if (!cryptoKey) return null;
+      try {
+        const period = options.period || 30;
+        const digits = options.digits || 6;
+        const epoch = Math.floor(Date.now() / 1000);
+        const counter = Math.floor(epoch / period);
+        
+        // Format counter as 8-byte big-endian integer using BigInt
+        const counterBytes = new Uint8Array(8);
+        let temp = BigInt(counter);
+        for (let i = 7; i >= 0; i--) {
+          counterBytes[i] = Number(temp & 0xffn);
+          temp >>= 8n;
+        }
+        
+        const signature = await window.crypto.subtle.sign(
+          "HMAC",
+          cryptoKey,
+          counterBytes
+        );
+        
+        const hmacBytes = new Uint8Array(signature);
+        const offset = hmacBytes[hmacBytes.length - 1] & 0x0f;
+        const binary = 
+          ((hmacBytes[offset] & 0x7f) << 24) |
+          ((hmacBytes[offset + 1] & 0xff) << 16) |
+          ((hmacBytes[offset + 2] & 0xff) << 8) |
+          (hmacBytes[offset + 3] & 0xff);
+          
+        const otp = binary % Math.pow(10, digits);
+        return otp.toString().padStart(digits, '0');
+      } catch (e) {
+        console.error("Error generating TOTP token:", e);
+        return null;
+      }
     }
 
     /**
@@ -4103,7 +4312,16 @@
       const notesChanged = (notesVal !== (match.notes || ''));
       const pinnedChanged = (pinnedVal !== !!match.pinned);
 
-      const hasChanges = nameChanged || urlChanged || usernameChanged || passwordChanged || notesChanged || pinnedChanged;
+      const totpVal = document.getElementById('credTotp').value.trim().replace(/\s+/g, '');
+      const totpAlgorithmVal = document.getElementById('credTotpAlgorithm').value;
+      const totpPeriodVal = parseInt(document.getElementById('credTotpPeriod').value) || 30;
+
+      const totpSecretChanged = (totpVal !== (match.totp_secret || ''));
+      const totpAlgorithmChanged = (totpAlgorithmVal !== (match.totp_algorithm || 'SHA-1'));
+      const totpPeriodChanged = (totpPeriodVal !== (match.totp_period || 30));
+
+      const hasChanges = nameChanged || urlChanged || usernameChanged || passwordChanged || notesChanged || pinnedChanged ||
+                         totpSecretChanged || totpAlgorithmChanged || totpPeriodChanged;
       // Save button is disabled if there are no changes, OR if any required field (url or username) is cleared
       const valid = (urlVal !== '' && usernameVal !== '');
       saveBtn.disabled = !hasChanges || !valid;
@@ -4145,8 +4363,21 @@
       const passwordFeedback = document.getElementById('modalPasswordCopyFeedback');
       if (passwordFeedback) passwordFeedback.style.display = 'none';
 
+      // Reset TOTP settings
+      const credTotp = document.getElementById('credTotp');
+      credTotp.value = '';
+      credTotp.type = 'password';
+      syncTotpToggleIcon(credTotp);
+      document.getElementById('credTotpAlgorithm').value = 'SHA-1';
+      document.getElementById('credTotpPeriod').value = '30';
+      document.getElementById('advancedTotpContainer').style.display = 'none';
+      
+      // Reset password label to "Password"
+      document.getElementById('credPasswordLabel').textContent = 'Password';
+
       // Hide current password group in Add mode
       document.getElementById('credCurrentPasswordGroup').style.display = 'none';
+      document.getElementById('advancedTotpChevron').style.transform = 'rotate(0deg)';
 
       updateEditModalState();
       credentialModal.showModal();
@@ -4158,7 +4389,8 @@
 
       document.getElementById('modalErrorAlert').style.display = 'none';
       document.getElementById('credIndex').value = index;
-      document.getElementById('credModalTitle').textContent = `Edit Credentials for ${match.site_url}`;
+      document.getElementById('credModalTitle').textContent = 'Edit Credentials';
+      document.getElementById('credPasswordLabel').textContent = 'New Password';
 
       document.getElementById('credName').value = match.name || '';
       document.getElementById('credUrl').value = match.site_url;
@@ -4172,6 +4404,30 @@
 
       document.getElementById('credNotes').value = match.notes || '';
       document.getElementById('credPinned').checked = !!match.pinned;
+
+      // Populate TOTP settings
+      const totpVal = match.totp_secret || '';
+      const totpAlg = match.totp_algorithm || 'SHA-1';
+      const totpPeriod = match.totp_period || 30;
+
+      const credTotp = document.getElementById('credTotp');
+      credTotp.value = totpVal;
+      credTotp.type = 'password';
+      syncTotpToggleIcon(credTotp);
+
+      document.getElementById('credTotpAlgorithm').value = totpAlg;
+      document.getElementById('credTotpPeriod').value = String(totpPeriod);
+
+      const hasCustomTotpSettings = totpAlg !== 'SHA-1' || totpPeriod !== 30;
+      const advContainer = document.getElementById('advancedTotpContainer');
+      const advChevron = document.getElementById('advancedTotpChevron');
+      if (hasCustomTotpSettings) {
+        advContainer.style.display = 'grid';
+        advChevron.style.transform = 'rotate(90deg)';
+      } else {
+        advContainer.style.display = 'none';
+        advChevron.style.transform = 'rotate(0deg)';
+      }
 
       // Show current password group in Edit mode
       document.getElementById('credCurrentPasswordGroup').style.display = 'block';
@@ -4239,6 +4495,78 @@
     document.getElementById('credNotes').addEventListener('input', updateEditModalState);
     document.getElementById('credNotes').addEventListener('change', updateEditModalState);
     document.getElementById('credPinned').addEventListener('change', updateEditModalState);
+
+    // Toggle advanced settings for TOTP
+    document.getElementById('toggleAdvancedTotpBtn').addEventListener('click', () => {
+      const container = document.getElementById('advancedTotpContainer');
+      const chevron = document.getElementById('advancedTotpChevron');
+      const isOpen = container.style.display === 'grid';
+      container.style.display = isOpen ? 'none' : 'grid';
+      chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+    });
+
+    // Listen to TOTP input controls
+    const credTotpEl = document.getElementById('credTotp');
+    credTotpEl.addEventListener('input', updateEditModalState);
+    credTotpEl.addEventListener('change', updateEditModalState);
+    document.getElementById('credTotpAlgorithm').addEventListener('change', updateEditModalState);
+    document.getElementById('credTotpPeriod').addEventListener('change', updateEditModalState);
+
+    // Auto-parse otpauth:// links pasted into TOTP Secret field
+    credTotpEl.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text').trim();
+      if (text.startsWith('otpauth://')) {
+        try {
+          const urlObj = new URL(text);
+          const secret = urlObj.searchParams.get('secret');
+          const alg = urlObj.searchParams.get('algorithm');
+          const period = urlObj.searchParams.get('period');
+          
+          if (secret) {
+            credTotpEl.value = secret.toUpperCase();
+            
+            if (alg) {
+              let formattedAlg = alg.toUpperCase();
+              if (formattedAlg === 'SHA1') formattedAlg = 'SHA-1';
+              if (formattedAlg === 'SHA256') formattedAlg = 'SHA-256';
+              if (formattedAlg === 'SHA512') formattedAlg = 'SHA-512';
+              const algOption = document.querySelector(`#credTotpAlgorithm option[value="${formattedAlg}"]`);
+              if (algOption) {
+                document.getElementById('credTotpAlgorithm').value = formattedAlg;
+              }
+            }
+            if (period) {
+              const periodOption = document.querySelector(`#credTotpPeriod option[value="${period}"]`);
+              if (periodOption) {
+                document.getElementById('credTotpPeriod').value = period;
+              }
+            }
+            
+            // Auto expand advanced settings if custom parameters detected
+            const hasCustomSettings = (alg && alg.toUpperCase() !== 'SHA1' && alg.toUpperCase() !== 'SHA-1') || (period && period !== '30');
+            const container = document.getElementById('advancedTotpContainer');
+            const chevron = document.getElementById('advancedTotpChevron');
+            if (hasCustomSettings) {
+              container.style.display = 'grid';
+              chevron.style.transform = 'rotate(90deg)';
+            }
+            
+            showToast("Successfully parsed otpauth link properties.", "success");
+            updateEditModalState();
+          } else {
+            showToast("No secret found in the otpauth link.", "error");
+          }
+        } catch (err) {
+          showToast("Failed to parse otpauth link properties.", "error");
+          console.error(err);
+        }
+      } else {
+        // Fallback standard paste: just set sanitized text
+        credTotpEl.value = text.replace(/\s+/g, '').toUpperCase();
+        updateEditModalState();
+      }
+    });
 
     // Toggle current password visibility
     const toggleCurrentPasswordVisibilityBtn = document.querySelector('.toggle-current-password-visibility');
@@ -4318,8 +4646,10 @@
 
       if (!siteUrl || !username || (index === -1 && !password)) return;
 
-      const finalPassword = (index !== -1 && !password) ? credCurrentPassword.value : password;
-      const record = { name, site_url: siteUrl, username, password: finalPassword, notes, pinned };
+      const rawTotpSecret = document.getElementById('credTotp').value.trim();
+      const totpSecret = rawTotpSecret.replace(/\s+/g, '').toUpperCase();
+      const totpAlgorithm = document.getElementById('credTotpAlgorithm').value;
+      const totpPeriod = parseInt(document.getElementById('credTotpPeriod').value) || 30;
 
       // Hide any previous errors before saving
       const alertEl = document.getElementById('modalErrorAlert');
@@ -4330,6 +4660,29 @@
       const originalText = saveBtn.textContent;
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving...';
+
+      if (totpSecret !== '') {
+        const isBase32 = /^[A-Z2-7]+=*$/i.test(totpSecret);
+        if (!isBase32) {
+          showModalError("Invalid TOTP secret. The secret must be a valid Base32 string (letters A-Z and digits 2-7).");
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+          return;
+        }
+      }
+
+      const finalPassword = (index !== -1 && !password) ? credCurrentPassword.value : password;
+      const record = { 
+        name, 
+        site_url: siteUrl, 
+        username, 
+        password: finalPassword, 
+        notes, 
+        pinned,
+        totp_secret: totpSecret,
+        totp_algorithm: totpAlgorithm,
+        totp_period: totpPeriod
+      };
 
       // Create a proposed copy of the items list
       const proposedItems = [...VAULT_ITEMS];
@@ -4726,6 +5079,7 @@
           const passIdx = findHeaderIndex(headers, ['password', 'login_password', 'pass']);
           const notesIdx = findHeaderIndex(headers, ['notes', 'note', 'comment']);
           const nameIdx = findHeaderIndex(headers, ['name', 'title']);
+          const totpIdx = findHeaderIndex(headers, ['totp', 'login_totp', 'otp', 'secret', '2fa']);
 
           // Require at least URL/Name, Username, and Password to be mapped
           if ((urlIdx === -1 && nameIdx === -1) || userIdx === -1 || passIdx === -1) {
@@ -4738,7 +5092,7 @@
           for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             // Skip rows that don't have enough fields to reach our key mapped columns
-            const minColsNeeded = Math.max(urlIdx, userIdx, passIdx, nameIdx, notesIdx) + 1;
+            const minColsNeeded = Math.max(urlIdx, userIdx, passIdx, nameIdx, notesIdx, totpIdx) + 1;
             if (row.length < minColsNeeded) {
               continue;
             }
@@ -4753,6 +5107,44 @@
             const password = passIdx !== -1 ? row[passIdx] : '';
             const notes = notesIdx !== -1 && row[notesIdx] ? row[notesIdx].trim() : '';
 
+            let totpSecret = '';
+            let totpAlgorithm = 'SHA-1';
+            let totpPeriod = 30;
+
+            const rawTotp = totpIdx !== -1 && row[totpIdx] ? row[totpIdx].trim() : '';
+            if (rawTotp.startsWith('otpauth://')) {
+              try {
+                const urlObj = new URL(rawTotp);
+                const sec = urlObj.searchParams.get('secret');
+                const alg = urlObj.searchParams.get('algorithm');
+                const per = urlObj.searchParams.get('period');
+                
+                if (sec) {
+                  totpSecret = sec.replace(/\s+/g, '').toUpperCase();
+                  if (alg) {
+                    let formattedAlg = alg.toUpperCase();
+                    if (formattedAlg === 'SHA1') formattedAlg = 'SHA-1';
+                    if (formattedAlg === 'SHA256') formattedAlg = 'SHA-256';
+                    if (formattedAlg === 'SHA512') formattedAlg = 'SHA-512';
+                    if (['SHA-1', 'SHA-256', 'SHA-512'].includes(formattedAlg)) {
+                      totpAlgorithm = formattedAlg;
+                    }
+                  }
+                  if (per) {
+                    const parsedPer = parseInt(per);
+                    if (parsedPer === 30 || parsedPer === 60) {
+                      totpPeriod = parsedPer;
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error("Failed to parse imported OTP URI", e);
+              }
+            } else if (rawTotp !== '') {
+              // Standard base32 secret
+              totpSecret = rawTotp.replace(/\s+/g, '').toUpperCase();
+            }
+
             // Skip empty/blank rows
             if (!siteUrl && !username) {
               continue;
@@ -4763,7 +5155,10 @@
               site_url: siteUrl,
               username: username,
               password: password,
-              notes: notes
+              notes: notes,
+              totp_secret: totpSecret,
+              totp_algorithm: totpAlgorithm,
+              totp_period: totpPeriod
             });
           }
 
@@ -4937,6 +5332,51 @@
       }
     }
 
+    async function updateTotpDisplay() {
+      if (!activeLookupItem || !activeLookupItem.totp_secret) return;
+      
+      const item = activeLookupItem;
+      const period = item.totp_period || 30;
+      
+      // 1. Get or create key
+      const key = await getOrCreateTotpKey(item);
+      if (!key) {
+        document.getElementById('lookupTotpCode').textContent = 'Error';
+        return;
+      }
+      
+      // 2. Generate TOTP code
+      const code = await generateTOTP(key, { period: period, digits: 6 });
+      if (code) {
+        const spacedCode = code.slice(0, 3) + ' ' + code.slice(3);
+        document.getElementById('lookupTotpCode').textContent = spacedCode;
+      } else {
+        document.getElementById('lookupTotpCode').textContent = 'Error';
+      }
+
+      // 3. Update circular progress SVG indicator
+      const epoch = Math.floor(Date.now() / 1000);
+      const remainingSeconds = period - (epoch % period);
+      const ratio = remainingSeconds / period;
+      const offset = 100.5 * (1 - ratio);
+      
+      const timerCircle = document.getElementById('lookupTotpTimerCircle');
+      if (timerCircle) {
+        timerCircle.style.strokeDashoffset = String(offset);
+      }
+      const timerText = document.getElementById('lookupTotpTimerText');
+      if (timerText) {
+        timerText.textContent = remainingSeconds;
+      }
+    }
+
+    // Set up global second interval ticker for active TOTP displays
+    setInterval(() => {
+      if (activeLookupItem && activeLookupItem.totp_secret) {
+        updateTotpDisplay();
+      }
+    }, 1000);
+
     function updateBackupAlertState() {
       if (typeof IS_OFFLINE_BACKUP !== 'undefined' && IS_OFFLINE_BACKUP) return;
 
@@ -4993,7 +5433,7 @@
         return;
       }
 
-      let csvContent = "name,url,username,password,note\n";
+      let csvContent = "name,url,username,password,note,totp\n";
 
       VAULT_ITEMS.forEach(item => {
         const escapeCsv = (val) => {
@@ -5032,7 +5472,18 @@
         const password = item.password || '';
         const notes = item.notes || '';
 
-        csvContent += `${escapeCsv(name)},${escapeCsv(url)},${escapeCsv(username)},${escapeCsv(password)},${escapeCsv(notes)}\n`;
+        let totpVal = '';
+        if (item.totp_secret && item.totp_secret.trim() !== '') {
+          const secret = item.totp_secret.trim();
+          const period = item.totp_period || 30;
+          const algorithm = item.totp_algorithm || 'SHA-1';
+          const cleanAlg = algorithm.replace('-', '');
+          const labelName = name || 'Site';
+          const labelUser = username || 'User';
+          totpVal = `otpauth://totp/${encodeURIComponent(labelName)}:${encodeURIComponent(labelUser)}?secret=${secret}&period=${period}&algorithm=${cleanAlg}`;
+        }
+
+        csvContent += `${escapeCsv(name)},${escapeCsv(url)},${escapeCsv(username)},${escapeCsv(password)},${escapeCsv(notes)},${escapeCsv(totpVal)}\n`;
       });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
