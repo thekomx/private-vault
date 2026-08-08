@@ -2189,6 +2189,8 @@
     let UNLOCKED_PASS = '';         // Unlocked Master Password in-memory
     let VAULT_ITEMS = [];           // Plaintext array of credentials currently unlocked
     let API_ROOT = 'api';           // Folder path containing PHP API endpoints
+    let LAST_ACTIVE_TAB_ID = 'lookup-tab'; // Active tab identifier before locking
+    let LOCKED_DRAFT_CIPHERTEXT = null;    // In-memory encrypted credential draft state
 
     // Offline Backup Parameters (populated dynamically on backup download)
     const EMBEDDED_VAULT_BLOB = null;
@@ -2292,6 +2294,7 @@
 
       btn.addEventListener('click', () => {
         const targetTab = btn.getAttribute('data-tab');
+        LAST_ACTIVE_TAB_ID = targetTab;
 
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -3637,14 +3640,7 @@
           document.getElementById('lock-panel').style.display = 'none';
           document.getElementById('tabNav').style.display = 'grid';
 
-          const isEmpty = VAULT_ITEMS.length === 0;
-          updateLookupTabVisibility(isEmpty);
-
-          if (isEmpty) {
-            document.querySelector('[data-tab="manage-tab"]').click();
-          } else {
-            document.querySelector('[data-tab="lookup-tab"]').click();
-          }
+          await restoreStateOnUnlock(masterKey);
 
           refreshLookupResults();
           refreshManageList();
@@ -3703,16 +3699,7 @@
             showUnlockedRecoveryAlert(false);
           }
 
-          const isEmpty = VAULT_ITEMS.length === 0;
-          updateLookupTabVisibility(isEmpty);
-
-          if (isEmpty) {
-            // Force activate Manage if empty
-            document.querySelector('[data-tab="manage-tab"]').click();
-          } else {
-            // Activate Lookup if records exist
-            document.querySelector('[data-tab="lookup-tab"]').click();
-          }
+          await restoreStateOnUnlock(masterKey);
 
           refreshManageList();
           showToast("Vault downloaded and unlocked successfully!");
@@ -3737,10 +3724,90 @@
       }
     });
 
+    async function restoreStateOnUnlock(masterKey) {
+      const isEmpty = VAULT_ITEMS.length === 0;
+      updateLookupTabVisibility(isEmpty);
+
+      if (isEmpty) {
+        document.querySelector('[data-tab="manage-tab"]')?.click();
+      } else {
+        const targetTabId = LAST_ACTIVE_TAB_ID || 'lookup-tab';
+        const tabBtn = document.querySelector(`[data-tab="${targetTabId}"]`);
+        if (tabBtn) {
+          tabBtn.click();
+        } else {
+          document.querySelector('[data-tab="lookup-tab"]')?.click();
+        }
+      }
+
+      // Restore encrypted draft if present
+      if (LOCKED_DRAFT_CIPHERTEXT && masterKey) {
+        try {
+          const decryptedDraftJson = await decryptGCM(LOCKED_DRAFT_CIPHERTEXT, masterKey);
+          const draftObj = JSON.parse(decryptedDraftJson);
+
+          if (draftObj) {
+            if (draftObj.index === -1) {
+              openAddModal();
+            } else {
+              openEditModal(draftObj.index);
+            }
+            if (draftObj.name !== undefined) document.getElementById('credName').value = draftObj.name;
+            if (draftObj.site_url !== undefined) document.getElementById('credUrl').value = draftObj.site_url;
+            if (draftObj.username !== undefined) document.getElementById('credUsername').value = draftObj.username;
+            if (draftObj.password !== undefined) document.getElementById('credPassword').value = draftObj.password;
+            if (draftObj.notes !== undefined) document.getElementById('credNotes').value = draftObj.notes;
+            if (draftObj.pinned !== undefined) document.getElementById('credPinned').checked = !!draftObj.pinned;
+            if (draftObj.totp_secret !== undefined) document.getElementById('credTotp').value = draftObj.totp_secret;
+            if (draftObj.totp_algorithm !== undefined) document.getElementById('credTotpAlgorithm').value = draftObj.totp_algorithm;
+            if (draftObj.totp_period !== undefined) document.getElementById('credTotpPeriod').value = String(draftObj.totp_period);
+
+            showToast("Restored unsaved credential draft.", "info");
+          }
+        } catch (draftErr) {
+          console.error("Failed to decrypt draft:", draftErr);
+        } finally {
+          LOCKED_DRAFT_CIPHERTEXT = null;
+        }
+      }
+    }
+
     // Vault locking procedure (shared by manual lock and auto-lock timeout)
     let autoLockTimer = null;
 
-    function lockVault(autoLocked = false) {
+    async function lockVault(autoLocked = false) {
+      // Encrypt unsaved draft data in memory before wiping sensitive data
+      LOCKED_DRAFT_CIPHERTEXT = null;
+      const credentialModal = document.getElementById('credentialModal');
+      if (credentialModal && credentialModal.open && UNLOCKED_PASS !== '') {
+        const indexVal = parseInt(document.getElementById('credIndex').value);
+        const draftObj = {
+          index: isNaN(indexVal) ? -1 : indexVal,
+          name: document.getElementById('credName').value,
+          site_url: document.getElementById('credUrl').value,
+          username: document.getElementById('credUsername').value,
+          password: document.getElementById('credPassword').value,
+          notes: document.getElementById('credNotes').value,
+          pinned: document.getElementById('credPinned').checked,
+          totp_secret: document.getElementById('credTotp').value,
+          totp_algorithm: document.getElementById('credTotpAlgorithm').value,
+          totp_period: document.getElementById('credTotpPeriod').value
+        };
+
+        const hasDraftContent = Object.values(draftObj).some(val => typeof val === 'string' && val.trim() !== '');
+        if (hasDraftContent) {
+          try {
+            const masterKey = await deriveKeyPBKDF2(UNLOCKED_PASS, VAULT_SALT, 600000, 256);
+            LOCKED_DRAFT_CIPHERTEXT = await encryptGCM(JSON.stringify(draftObj), masterKey);
+          } catch (err) {
+            console.error("Failed to encrypt draft data:", err);
+          }
+        }
+      }
+
+      if (credentialModal && credentialModal.open) {
+        credentialModal.close();
+      }
       // Clear sensitive memory data
       UNLOCKED_PASS = '';
       VAULT_ITEMS = [];
@@ -4342,7 +4409,7 @@
 
     let lastPasswordLength = 0;
 
-    openAddModalBtn.addEventListener('click', () => {
+    function openAddModal() {
       document.getElementById('modalErrorAlert').style.display = 'none';
       document.getElementById('credIndex').value = '-1';
       document.getElementById('credModalTitle').textContent = 'Add Site Credentials';
@@ -4381,7 +4448,9 @@
 
       updateEditModalState();
       credentialModal.showModal();
-    });
+    }
+
+    openAddModalBtn.addEventListener('click', openAddModal);
 
     function openEditModal(index) {
       const match = VAULT_ITEMS[index];
@@ -4686,11 +4755,15 @@
 
       // Create a proposed copy of the items list
       const proposedItems = [...VAULT_ITEMS];
+      const usernameLower = username.toLowerCase();
       if (index === -1) {
         // Add Mode
-        const exists = proposedItems.some(item => item.site_url.toLowerCase() === siteUrl);
+        const exists = proposedItems.some(item => 
+          (item.site_url || '').toLowerCase().trim() === siteUrl && 
+          (item.username || '').toLowerCase().trim() === usernameLower
+        );
         if (exists) {
-          showModalError("A record for this Site URL already exists.");
+          showModalError("A record for this Site URL and Username already exists.");
           saveBtn.disabled = false;
           saveBtn.textContent = originalText;
           return;
@@ -4698,9 +4771,13 @@
         proposedItems.push(record);
       } else {
         // Edit Mode
-        const exists = proposedItems.some((item, idx) => idx !== index && item.site_url.toLowerCase() === siteUrl);
+        const exists = proposedItems.some((item, idx) => 
+          idx !== index && 
+          (item.site_url || '').toLowerCase().trim() === siteUrl && 
+          (item.username || '').toLowerCase().trim() === usernameLower
+        );
         if (exists) {
-          showModalError("A record for this Site URL already exists.");
+          showModalError("A record for this Site URL and Username already exists.");
           saveBtn.disabled = false;
           saveBtn.textContent = originalText;
           return;
